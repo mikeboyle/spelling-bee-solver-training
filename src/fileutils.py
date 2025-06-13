@@ -2,91 +2,131 @@ import json
 import os
 from glob import glob
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
-from src.constants import MOUNT_POINT, LOCAL_DATA_LAKE
+from src.constants import (
+    DATABRICKS_PATH_PREFIX,
+    LOCAL_DATA_LAKE_PREFIX,
+    MOUNT_POINT,
+    RAW_SOLUTIONS_PATH,
+)
+from src.envutils import is_databricks_env
 
-def is_databricks_env():
-    """Check if we're running in Databricks"""
-    return 'DATABRICKS_RUNTIME_VERSION' in os.environ
 
 def get_local_path(filepath: str) -> str:
-    """Convert paths to DBFS local paths when in Databricks"""
+    """
+    Convert path to DBFS local path when in Databricks environment,
+    so that we can use local file system methods such as `open` in both local
+    and Databricks environments.
+
+    Prepend path to local data lake when in local (non Databricks) env, and prepend
+    the mount point in the Databricks environment.
+
+    This allows calling code in either environment to simply use
+    relative paths, e.g., "raw/solutions/year=2024".
+    """
     if is_databricks_env():
-        new_path = Path("/dbfs") / MOUNT_POINT.lstrip("/") / filepath.lstrip("/")
+        if filepath.startswith(DATABRICKS_PATH_PREFIX):
+            # already converted; just return it
+            return filepath
+
+        new_path = (
+            Path(DATABRICKS_PATH_PREFIX)
+            / MOUNT_POINT.lstrip("/")
+            / filepath.lstrip("/")
+        )
         return str(new_path)
-    
+
     else:
-        # Not in Databricks, return with path to local data storage
-        new_path = os.path.join(LOCAL_DATA_LAKE, filepath)
+        # Not in Databricks, assume we are in local env.
+        # Return with path to local data storage
+
+        if filepath.startswith(LOCAL_DATA_LAKE_PREFIX):
+            # already converted; just return it
+            return filepath
+
+        new_path = os.path.join(LOCAL_DATA_LAKE_PREFIX, filepath)
         return new_path
 
-def get_all_json_files_dbx(path: str) -> list[str]:
-    if not is_databricks_env():
-        raise Exception("This method is only for the databricks environment")
+
+def get_all_files(
+    dirpath: str, exts: Optional[list[str]] = None, recursive: bool = True
+) -> list[str]:
+    """
+    Get all files in the given dirpath.
+    If `exts` arg is provided, filters file list by given extensions.
+    """
+    local_dirpath = get_local_path(dirpath)
+    file_list = glob(os.path.join(local_dirpath, "**/*"), recursive=recursive) 
+    if exts is not None:
+        exts_set = set()
+        for ext in exts:
+            if ext.startswith("."):
+                exts_set.add(ext)
+            else:
+                exts_set.add(f".{ext}")
+
+        file_list = [f for f in file_list if "".join(Path(f).suffixes) in exts_set]
     
-    files = []
-    for item in dbutils.fs.ls(path):
-        if item.isDir():
-            files.extend(get_all_json_files_dbx(item.path))
-        elif item.path.endswith('.json'):
-            files.append(item.path)
-    return files
+    return file_list
+
 
 def get_puzzle_paths(year: int, month: int) -> list[str]:
     """Get all paths to puzzles for a given year and month"""
-    input_path = get_local_path(f"raw/solutions/year={year}/month={month:02}")
-    if is_databricks_env():
-        return get_all_json_files_dbx(input_path)
-    else:
-        return glob(os.path.join(input_path, "*.json"))
+    input_path = f"{RAW_SOLUTIONS_PATH}/year={year}/month={month:02}"
+    return get_all_files(input_path, [".json"])
+
 
 def get_puzzle_path(date_str: str) -> str:
     """Takes the YYYY-MM-DD date of a puzzle and returns
     the path to the puzzle solution"""
     filename = f"{date_str}.json"
     year, month, _ = date_str.split("-")
-    file_path = f"raw/solutions/year={year}/month={month}/{filename}"
+    file_path = f"{RAW_SOLUTIONS_PATH}/year={year}/month={month}/{filename}"
 
     return get_local_path(file_path)
+
 
 def get_puzzle_by_date(puzzle_date: str) -> dict[str, Any]:
     puzzle_path = get_puzzle_path(puzzle_date)
     with open(puzzle_path) as f:
         puzzle = json.load(f)
-    
+
     return puzzle
+
 
 def get_puzzle_by_path(puzzle_path: str) -> dict[str, Any]:
     fp = get_local_path(puzzle_path)
     with open(fp) as f:
         puzzle = json.load(f)
-    
+
     return puzzle
 
-def dump_json_to_file(data: Any,
-                      filepath: str,
-                      sort_keys: bool = True,
-                      indent: int = 4) -> None:
+
+def dump_json_to_file(
+    data: Any, filepath: str, sort_keys: bool = True, indent: int = 4
+) -> None:
     """
     Creates a new file, overwrites existing file with same name
     """
     fp = get_local_path(filepath)
-    with open(fp, 'w') as f:
+    with open(fp, "w") as f:
         json_data = json.dumps(data, sort_keys=sort_keys, indent=indent)
         f.write(json_data)
-        f.write("\n") # add newline at end
+        f.write("\n")  # add newline at end
+
 
 def dump_word_list_to_file(words: list[str], filepath: str) -> None:
     """
     Creates a new file, overwrites existing file with same name
     """
     fp = get_local_path(filepath)
-    with open(fp, 'w') as f:
+    with open(fp, "w") as f:
         for word in words[:-1]:
             f.write(f"{word}\n")
-        
+
         f.write(words[-1])
+
 
 def word_file_to_set(filepath: str) -> set[str]:
     """
@@ -104,12 +144,12 @@ def word_file_to_set(filepath: str) -> set[str]:
             # source .txt file.
             start = 0
             end = len(line)
-            if line[0] == "\"" or line[0] == "'":
+            if line[0] == '"' or line[0] == "'":
                 start += 1
-            if line[-1] == "\"" or line[-1] == "'":
+            if line[-1] == '"' or line[-1] == "'":
                 end -= 1
-            
+
             word = line[start:end]
             output.add(word)
-    
+
     return output
