@@ -19,8 +19,8 @@ def get_local_path(filepath: str) -> str:
     so that we can use local file system methods such as `open` in both local
     and Databricks environments.
 
-    Prepend path to local data lake when in local (non Databricks) env, and prepend
-    the mount point in the Databricks environment.
+    Prepend path to local data lake when in local (non Databricks) env,
+    and prepend the mount point in the Databricks environment.
 
     This allows calling code in either environment to simply use
     relative paths, e.g., "raw/solutions/year=2024".
@@ -57,7 +57,7 @@ def get_all_files(
     If `exts` arg is provided, filters file list by given extensions.
     """
     local_dirpath = get_local_path(dirpath)
-    file_list = glob(os.path.join(local_dirpath, "**/*"), recursive=recursive) 
+    file_list = glob(os.path.join(local_dirpath, "**/*"), recursive=recursive)
     if exts is not None:
         exts_set = set()
         for ext in exts:
@@ -67,7 +67,7 @@ def get_all_files(
                 exts_set.add(f".{ext}")
 
         file_list = [f for f in file_list if "".join(Path(f).suffixes) in exts_set]
-    
+
     return file_list
 
 
@@ -88,16 +88,22 @@ def get_puzzle_path(date_str: str) -> str:
 
 
 def get_puzzle_by_date(puzzle_date: str) -> dict[str, Any]:
+    """
+    Attempts to get a puzzle by date. Will error if no puzzle exists for date
+    """
     puzzle_path = get_puzzle_path(puzzle_date)
-    with open(puzzle_path) as f:
+    with open(puzzle_path, "r") as f:
         puzzle = json.load(f)
 
     return puzzle
 
 
 def get_puzzle_by_path(puzzle_path: str) -> dict[str, Any]:
+    """
+    Attempts to get a puzzle by its path. Will error if path or filename doesn't exist.
+    """
     fp = get_local_path(puzzle_path)
-    with open(fp) as f:
+    with open(fp, "r") as f:
         puzzle = json.load(f)
 
     return puzzle
