@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from typing import Any
 from src.constants import DATE_FORMAT, SPELLING_BEE_URL
-from src.utils import dump_json_to_file
+from src.fileutils import dump_json_to_file
 
 def fetch_today_puzzle() -> dict[str, Any]:
     """Fetches the current day's Spelling Bee puzzle and loads as JSON object"""
