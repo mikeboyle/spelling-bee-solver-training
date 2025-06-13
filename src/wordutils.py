@@ -2,6 +2,7 @@ from typing import Any
 from collections import defaultdict
 from datetime import datetime
 import itertools
+from pathlib import Path
 
 from src.fileutils import get_puzzle_by_date, get_puzzle_by_path
 from src.constants import DATE_FORMAT
@@ -60,10 +61,20 @@ def get_matching_words(
     return matching_words
 
 
-def ingest_puzzle(
-    puzzle: dict[str, Any], wordlist: set[str], letter_set_map: dict[str, list[Any]]
+def _transform_puzzle_to_word_decisions(
+    puzzle: dict[str, Any],
+    wordlist: set[str],
+    letter_set_map: dict[str, list[Any]],
+    wordlist_version: int,
 ) -> list[dict[str, Any]]:
-    
+    """
+    For the given puzzle, wordlist, and letter_set_map:
+    - get the date, center / outer letters, and official solution from puzzle
+    - find all words in wordlist which _could_ be formed by center / outer letters
+    - return row for each word to record the explicit or implicit decision to include
+    or exclude the word from the official solution
+    """
+
     puzzle_date = puzzle["printDate"]
     center_letter = puzzle["centerLetter"].upper()
     outer_letters = "".join([letter.upper() for letter in puzzle["outerLetters"]])
@@ -86,23 +97,32 @@ def ingest_puzzle(
                 "puzzle_date": datetime.strptime(puzzle_date, DATE_FORMAT),
                 "center_letter": center_letter,
                 "outer_letters": outer_letters,
+                "wordlist_version": wordlist_version,
             }
         )
 
     return rows
 
 
-def ingest_puzzle_by_path(
-    puzzle_path: str, wordlist: set[str], letter_set_map: dict[str, list[Any]]
+def transform_puzzle_to_word_decisions_by_path(
+    puzzle_path: str,
+    wordlist: set[str],
+    letter_set_map: dict[str, list[Any]],
+    wordlist_version: int,
 ) -> list[dict[str, Any]]:
-    
+
     puzzle = get_puzzle_by_path(puzzle_path)
 
-    return ingest_puzzle(puzzle, wordlist, letter_set_map)
+    return _transform_puzzle_to_word_decisions(
+        puzzle, wordlist, letter_set_map, wordlist_version
+    )
 
 
-def ingest_puzzle_by_date(
-    puzzle_date: str, wordlist: set[str], letter_set_map: dict[str, list[Any]]
+def transform_puzzle_to_word_decisions_by_date(
+    puzzle_date: str,
+    wordlist: set[str],
+    letter_set_map: dict[str, list[Any]],
+    wordlist_version: int,
 ) -> list[dict[str, Any]]:
     """
     Read in puzzle for the given date, finds all possible words in wordlist that
@@ -111,4 +131,6 @@ def ingest_puzzle_by_date(
     """
     puzzle = get_puzzle_by_date(puzzle_date)
 
-    return ingest_puzzle(puzzle, wordlist, letter_set_map)
+    return _transform_puzzle_to_word_decisions(
+        puzzle, wordlist, letter_set_map, wordlist_version
+    )

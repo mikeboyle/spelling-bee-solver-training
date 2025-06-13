@@ -9,6 +9,7 @@ from src.constants import (
     LOCAL_DATA_LAKE_PREFIX,
     MOUNT_POINT,
     RAW_SOLUTIONS_PATH,
+    WORDLIST_PATH,
 )
 from src.envutils import is_databricks_env
 
@@ -159,3 +160,24 @@ def word_file_to_set(filepath: str) -> set[str]:
             output.add(word)
 
     return output
+
+def get_wordlist_version(wordlist: str) -> int:
+    """
+    Parse the wordlist filename for the version number.
+    Expects filenames to have the format `{filename}_vN.{ext}`
+    where N is the version number
+    """
+    filename = Path(wordlist).stem
+    version = filename.split("_")[-1]
+    version_num = int(version[1:])
+
+    return version_num
+
+def get_latest_wordlist() -> tuple[str, int]:
+    """
+    Return the most recent word list and its version number
+    """
+    wordlists = get_all_files(WORDLIST_PATH, ["txt"])
+    wordlist_versions = [(wordlist, get_wordlist_version(wordlist)) for wordlist in wordlists]
+
+    return max(wordlist_versions, key=lambda x:x[1])
