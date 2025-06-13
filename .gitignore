@@ -1,3 +1,4 @@
-data_lake/
+local_data/
 .ipynb_checkpoints/
 __pycache__/
+notebooks/derby.log

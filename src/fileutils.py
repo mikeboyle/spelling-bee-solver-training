@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from src.constants import (
     DATABRICKS_PATH_PREFIX,
-    LOCAL_DATA_LAKE_PREFIX,
+    LOCAL_DATA_LAKE_PATH,
     MOUNT_POINT,
     RAW_SOLUTIONS_PATH,
     WORDLIST_PATH,
@@ -42,11 +42,11 @@ def get_local_path(filepath: str) -> str:
         # Not in Databricks, assume we are in local env.
         # Return with path to local data storage
 
-        if filepath.startswith(LOCAL_DATA_LAKE_PREFIX):
+        if filepath.startswith(LOCAL_DATA_LAKE_PATH):
             # already converted; just return it
             return filepath
 
-        new_path = os.path.join(LOCAL_DATA_LAKE_PREFIX, filepath)
+        new_path = os.path.join(LOCAL_DATA_LAKE_PATH, filepath)
         return new_path
 
 
@@ -161,6 +161,7 @@ def word_file_to_set(filepath: str) -> set[str]:
 
     return output
 
+
 def get_wordlist_version(wordlist: str) -> int:
     """
     Parse the wordlist filename for the version number.
@@ -173,11 +174,14 @@ def get_wordlist_version(wordlist: str) -> int:
 
     return version_num
 
+
 def get_latest_wordlist() -> tuple[str, int]:
     """
     Return the most recent word list and its version number
     """
     wordlists = get_all_files(WORDLIST_PATH, ["txt"])
-    wordlist_versions = [(wordlist, get_wordlist_version(wordlist)) for wordlist in wordlists]
+    wordlist_versions = [
+        (wordlist, get_wordlist_version(wordlist)) for wordlist in wordlists
+    ]
 
-    return max(wordlist_versions, key=lambda x:x[1])
+    return max(wordlist_versions, key=lambda x: x[1])
