@@ -10,6 +10,8 @@ from pyspark.sql.types import (
 )
 import pyspark.sql.functions as F
 
+WORD_DECISIONS_PARTITIONS = ["year", "month"]
+
 word_decisions_schema: StructType = StructType(
     [
         StructField("word", StringType(), False),
