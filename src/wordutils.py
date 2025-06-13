@@ -2,7 +2,6 @@ from typing import Any
 from collections import defaultdict
 from datetime import datetime
 import itertools
-from pathlib import Path
 
 from src.fileutils import get_puzzle_by_date, get_puzzle_by_path
 from src.constants import DATE_FORMAT
@@ -23,7 +22,7 @@ def get_word_from_row(row: str | tuple[str, Any]) -> str:
         return row[0]
 
 
-def get_letter_set_map(wordlist: set[str]) -> dict[str, list[str]]:
+def get_letter_set_map(wordlist: set[str]) -> dict[str, list[Any]]:
     """Takes a wordlist and groups them by the distinct letter sets
     they are formed from"""
     letter_set_map = defaultdict(list)

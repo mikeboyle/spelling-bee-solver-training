@@ -1,4 +1,4 @@
-from typing import Any, TypedDict
+from typing import Any
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import (
     StructType,
