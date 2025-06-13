@@ -10,7 +10,7 @@ from pyspark.sql.types import (
 )
 import pyspark.sql.functions as F
 
-bronze_schema: StructType = StructType(
+word_decisions_schema: StructType = StructType(
     [
         StructField("word", StringType(), False),
         StructField("accepted", BooleanType(), False),
@@ -23,11 +23,11 @@ bronze_schema: StructType = StructType(
 )
 
 
-def rows_to_bronze_df(rows: list[Any], spark: SparkSession) -> DataFrame:
+def rows_to_word_decisions_df(rows: list[Any], spark: SparkSession) -> DataFrame:
     """
     Writes rows to dataframe and (TODO) saves to table
     """
-    df = spark.createDataFrame(rows, schema=bronze_schema)
+    df = spark.createDataFrame(rows, schema=word_decisions_schema)
 
     # Add derived year/month/day columns for partitioning
     df = (
