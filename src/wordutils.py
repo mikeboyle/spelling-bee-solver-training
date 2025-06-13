@@ -61,9 +61,10 @@ def get_matching_words(
 
 
 def ingest_puzzle(
-    puzzle: dict[str, Any], word_list: set[str], letter_set_map: dict[str, list[Any]]
+    puzzle: dict[str, Any], wordlist: set[str], letter_set_map: dict[str, list[Any]]
 ) -> list[dict[str, Any]]:
     
+    puzzle_date = puzzle["printDate"]
     center_letter = puzzle["centerLetter"].upper()
     outer_letters = "".join([letter.upper() for letter in puzzle["outerLetters"]])
 
@@ -92,12 +93,12 @@ def ingest_puzzle(
 
 
 def ingest_puzzle_by_path(
-    puzzle_path: str, word_list: set[str], letter_set_map: dict[str, list[Any]]
+    puzzle_path: str, wordlist: set[str], letter_set_map: dict[str, list[Any]]
 ) -> list[dict[str, Any]]:
     
     puzzle = get_puzzle_by_path(puzzle_path)
 
-    return ingest_puzzle(puzzle, word_list, letter_set_map)
+    return ingest_puzzle(puzzle, wordlist, letter_set_map)
 
 
 def ingest_puzzle_by_date(

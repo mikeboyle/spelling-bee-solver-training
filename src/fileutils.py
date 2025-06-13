@@ -21,11 +21,25 @@ def get_local_path(filepath: str) -> str:
         new_path = os.path.join(LOCAL_DATA_LAKE, filepath)
         return new_path
 
+def get_all_json_files_dbx(path: str) -> list[str]:
+    if not is_databricks_env():
+        raise Exception("This method is only for the databricks environment")
+    
+    files = []
+    for item in dbutils.fs.ls(path):
+        if item.isDir():
+            files.extend(get_all_json_files_dbx(item.path))
+        elif item.path.endswith('.json'):
+            files.append(item.path)
+    return files
 
 def get_puzzle_paths(year: int, month: int) -> list[str]:
     """Get all paths to puzzles for a given year and month"""
     input_path = get_local_path(f"raw/solutions/year={year}/month={month:02}")
-    return glob(os.path.join(input_path, "*.json"))
+    if is_databricks_env():
+        return get_all_json_files_dbx(input_path)
+    else:
+        return glob(os.path.join(input_path, "*.json"))
 
 def get_puzzle_path(date_str: str) -> str:
     """Takes the YYYY-MM-DD date of a puzzle and returns
