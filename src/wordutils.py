@@ -22,6 +22,32 @@ def get_word_from_row(row: str | tuple[str, Any]) -> str:
         return row[0]
 
 
+def get_letter_set(word: str) -> str:
+    """
+    Return the distinct letters of `word` as a sorted and uppercased string
+    """
+    distinct_letters = set(word)
+    return "".join(sorted(distinct_letters)).upper()
+
+def filter_wordlist(words: set[str]) -> set[str]:
+    """
+    Remove words from list that cannot be Spelling Beee solutions.
+    - less than 4 chars long
+    - formed by more than 7 distinct letters
+    """
+    output = set()
+    for word in words:
+        if len(word) < 4:
+            continue
+
+        letter_set = get_letter_set(word)
+        if len(letter_set) > 7:
+            continue
+
+        output.add(word)
+
+    return output
+
 def get_letter_set_map(wordlist: set[str]) -> dict[str, list[Any]]:
     """Takes a wordlist and groups them by the distinct letter sets
     they are formed from"""
@@ -31,11 +57,10 @@ def get_letter_set_map(wordlist: set[str]) -> dict[str, list[Any]]:
         if len(word) < 4:
             continue
 
-        distinct_letters = set(word)
-        if len(distinct_letters) > 7:
+        letter_set = get_letter_set(word)
+        if len(letter_set) > 7:
             continue
 
-        letter_set = "".join(sorted(distinct_letters)).upper()
         letter_set_map[letter_set].append(row)
 
     return letter_set_map
