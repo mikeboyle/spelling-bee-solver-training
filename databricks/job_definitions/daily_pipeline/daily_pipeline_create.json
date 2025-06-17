@@ -44,8 +44,5 @@
   ],
   "queue": {
     "enabled": true
-  },
-  "run_as": {
-    "user_name": "mboyle35@gatech.edu"
   }
 }
