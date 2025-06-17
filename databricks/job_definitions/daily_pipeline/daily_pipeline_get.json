@@ -1,8 +1,5 @@
 {
   "job_id": 99497279881584,
-  "creator_user_name": "mboyle35@gatech.edu",
-  "run_as_user_name": "mboyle35@gatech.edu",
-  "run_as_owner": true,
   "settings": {
     "name": "daily_pipeline",
     "email_notifications": {

@@ -2,3 +2,6 @@ local_data/
 .ipynb_checkpoints/
 __pycache__/
 notebooks/derby.log
+
+# artifact of dbutils.fs.cp()
+*.crc
