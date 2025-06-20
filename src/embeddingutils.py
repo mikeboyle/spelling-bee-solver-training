@@ -17,7 +17,6 @@ def get_word_embedding(args: tuple[str, Any, Any]) -> list[float]:
     # Compose into a single feature vector
     embedding_np = embedding.cpu().detach().numpy()
     alt = [float(x) for x in embedding_np.tolist()]
-    print(f"alt = {type(alt[0])}, tolist={type(embedding_np.tolist()[0])}, embedding_np = {type(embedding_np[0])}")
     return embedding_np
 
 
@@ -40,10 +39,10 @@ def get_word_embeddings_threaded(
         
         # Collect results as they complete
         for future in concurrent.futures.as_completed(future_to_word):
+            word = future_to_word[future]
             embedding = future.result()
             embeddings_dict[word] = embedding
     
-    # print("\n")
     return embeddings_dict
 
 
