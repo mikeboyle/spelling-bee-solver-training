@@ -16,8 +16,7 @@ def get_word_embedding(args: tuple[str, Any, Any]) -> list[float]:
 
     # Compose into a single feature vector
     embedding_np = embedding.cpu().detach().numpy()
-    alt = [float(x) for x in embedding_np.tolist()]
-    return embedding_np
+    return embedding_np.tolist()
 
 
 def get_word_embeddings_threaded(
