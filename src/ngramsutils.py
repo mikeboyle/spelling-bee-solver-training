@@ -1,7 +1,7 @@
 import requests
 import concurrent.futures
 import requests
-from time import sleep
+import time
 from src.constants import NGRAMS_API_BASE
 
 def query_one(word: str) -> requests.Response:
@@ -35,7 +35,7 @@ def get_ngram_latest_frequency(ngram_id: str) -> float:
 def get_ngram_latest_frequency_threaded(word_id_tuple: tuple[str, str]) -> tuple[str, float]:
     word, ngram_id = word_id_tuple
     # Add small delay to be respectful to API rate limits
-    sleep(0.1) 
+    time.sleep(0.1) 
     return word, get_ngram_latest_frequency(ngram_id)
 
 def get_ngram_stats_frequencies(ngram_id: str) -> list[float]:
@@ -48,6 +48,8 @@ def get_word_frequencies(words: list[str]) -> dict[str, float]:
     """Fetches the latest word frequency from ngrams API for a list of words.
     Returns as a dictionary because we may not be able to guarantee that API
     call results are returned in the order of the words in the input list."""
+    
+
     print(f"get_word_frequencies(), words = {','.join(words[:10])}...")
     frequencies_dict = {}
 
@@ -70,6 +72,7 @@ def get_word_frequencies(words: list[str]) -> dict[str, float]:
 
 def get_word_frequencies_threaded(words: list[str], max_workers=5):
     """Threaded version of get_word_frequencies"""
+    start = time.time()
     print(f"get_word_frequencies_threaded(), words = {', '.join(words[:10])}...")
     frequencies_dict = {}
 
@@ -85,8 +88,6 @@ def get_word_frequencies_threaded(words: list[str], max_workers=5):
             ngram = ngrams[0]
             ngram_id = ngram['id']
             word_id_tuples.append((word, ngram_id))
-            # frequencies_dict[word] = get_ngram_latest_frequency(ngram_id)
-    print(f"get_word_frequencies_threaded(), parsing {len(results)} results...") 
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_word = {executor.submit(get_ngram_latest_frequency_threaded, word_id_tuple): word_id_tuple 
@@ -97,7 +98,8 @@ def get_word_frequencies_threaded(words: list[str], max_workers=5):
             word, frequency = future.result()
             frequencies_dict[word] = frequency
     
-    # print("\n")
+    
+    print(f"get_word_frequencies_threaded() time: {time.time() - start:.2f}s")
     return frequencies_dict
 
 

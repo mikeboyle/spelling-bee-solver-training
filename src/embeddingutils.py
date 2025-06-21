@@ -1,8 +1,9 @@
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
 import torch
-import numpy as np
 import concurrent.futures
 from typing import Any
+import time
+
 
 def get_word_embedding(args: tuple[str, Any, Any]) -> list[float]:
     word, model, tokenizer = args
@@ -20,14 +21,15 @@ def get_word_embedding(args: tuple[str, Any, Any]) -> list[float]:
 
 
 def get_word_embeddings_threaded(
-    words: list[str], max_workers: int = 5
+    words: list[str],
+    model: PreTrainedModel,
+    tokenizer: PreTrainedTokenizer,
+    max_workers: int = 5,
 ) -> dict[str, list[float]]:
     """Threaded version of get_word_embeddings"""
-    print(f"getting word embeddings for {', '.join(words[:10])}...")
-    # Load pre-trained model and tokenizer
-    model = AutoModel.from_pretrained("bert-base-cased")
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
-    
+    start = time.time()
+    print(f"get_word_embeddings_threaded(), words = {', '.join(words[:10])}...")
+
     embeddings_dict = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_word = {}
@@ -35,13 +37,15 @@ def get_word_embeddings_threaded(
             args = (word, model, tokenizer)
             future = executor.submit(get_word_embedding, args)
             future_to_word[future] = word
-        
+
         # Collect results as they complete
         for future in concurrent.futures.as_completed(future_to_word):
             word = future_to_word[future]
             embedding = future.result()
             embeddings_dict[word] = embedding
     
+    print(f"get_word_embeddings_threaded() time: {time.time() - start:.2f}s")
+
     return embeddings_dict
 
 
