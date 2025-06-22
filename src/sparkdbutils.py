@@ -1,6 +1,8 @@
 from pathlib import Path
 from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.types import StructType
 from typing import Any, Optional
+
 
 from src.constants import MOUNT_POINT
 from src.envutils import is_databricks_env
@@ -28,19 +30,55 @@ def get_spark_db_location_path(relative_path: str) -> str:
     return relative_path
 
 
-def get_or_create_db(spark: SparkSession, db_name: str) -> Optional[DataFrame]:
+def create_db(spark: SparkSession, db_name: str) -> Optional[DataFrame]:
     """
-    If db does not already exists, creates it at the root
+    If db does not already exist, creates it at the root
     of the data lake / storage location
     """
     db_location = get_spark_db_location_path(db_name)
 
     if not spark.catalog.databaseExists(db_name):
-        print(f"creating database {db_name}...")
+        print(f"Creating database {db_name}...")
         return spark.sql(f"CREATE DATABASE {db_name} LOCATION '{db_location}'")
+    else:
+        print(f"Database {db_name} already exists.")
 
 
-def write_to_table(
+def create_unpartitioned_table(
+    spark: SparkSession,
+    df: DataFrame,
+    table_name: str,
+    db_name: str,
+) -> None:
+    """
+    Creates a new table named `{db_name}.{table_name}` from the DataFrame `df' 
+    if the table doesn't already exist.
+    
+    This function handles use cases where the table does not have logical partition columns
+    (for example there are NOT obvious partitions like ["year", "month", "day"]).
+
+    Raises error if the database does not exist or the table already exists.
+    """
+    if not spark.catalog.databaseExists(db_name):
+        raise ValueError(
+            f"Database {db_name} does not exist; call `create_db() to create it"
+        )
+
+    qualified_name = f"{db_name}.{table_name}"
+    if spark.catalog.tableExists(qualified_name):
+        raise ValueError(
+            f"Table {qualified_name} already exists; call another method to drop it or add to it."
+        )
+
+    df.write \
+      .format("delta") \
+      .mode("overwrite") \
+      .saveAsTable(f"{db_name}.{table_name}")
+    
+    print(f"Unpartitioned table created at {qualified_name}")
+
+
+def write_to_table_replace_where(
     spark: SparkSession,
     df: DataFrame,
     db_name: str,
@@ -51,6 +89,11 @@ def write_to_table(
 
     filters = [f"{column} = {value}" for column, value in replace_where_dict.items()]
     where_clause = " AND ".join(filters)
+
+    if not spark.catalog.databaseExists(db_name):
+        raise ValueError(
+            f"Database {db_name} does not exist; call `create_if_not_exists_db() to create it"
+        )
 
     if not spark.catalog.tableExists(f"{db_name}.{table_name}"):
         # Write table for first time; ok and necesssary to set the partitions
