@@ -75,8 +75,56 @@ def create_unpartitioned_table(
       .mode("overwrite") \
       .saveAsTable(f"{db_name}.{table_name}")
     
-    print(f"Unpartitioned table created at {qualified_name}")
+    print(f"✅ Unpartitioned table created at {qualified_name}")
 
+
+def create_repartitioned_table(
+    spark: SparkSession,
+    df: DataFrame,
+    table_name: str,
+    db_name: str,
+    num_partitions: int = 10,
+) -> None:
+    """
+    Creates a new table named `{db_name}.{table_name}` from the DataFrame `df`
+    if the table doesn't already exist.
+
+    This function handles use cases where the table does not have logical partition columns
+    (for example there are NOT obvious partitions like ["year", "month", "day"]).
+    The DataFrame is repartitioned into smaller batches to avoid memory issues when
+    writing large data structures like embedding vectors.
+
+    Args:
+        spark: Active SparkSession
+        df: DataFrame to save as table
+        table_name: Name of the table to create
+        db_name: Name of the database where table will be created
+        num_partitions: Number of partitions to split the data into for writing.
+                       Higher values = smaller batches = less memory pressure.
+                       Default is 10.
+
+    Raises:
+        ValueError: If the database does not exist or the table already exists.
+    """
+    if not spark.catalog.databaseExists(db_name):
+        raise ValueError(
+            f"Database {db_name} does not exist; call `create_db()` to create it"
+        )
+
+    qualified_name = f"{db_name}.{table_name}"
+    if spark.catalog.tableExists(qualified_name):
+        raise ValueError(
+            f"Table {qualified_name} already exists; call another method to drop it or add to it."
+        )
+
+    # Repartition to handle memory issues with large data structures
+    df.repartition(num_partitions) \
+      .write \
+      .format("delta") \
+      .mode("overwrite") \
+      .saveAsTable(qualified_name)
+
+    print(f"✅ Repartitioned table created at {qualified_name} with {num_partitions} partitions")
 
 def write_to_table_replace_where(
     spark: SparkSession,
@@ -101,9 +149,13 @@ def write_to_table_replace_where(
         df.write.format("delta").mode("overwrite").partitionBy(partitions).saveAsTable(
             f"{db_name}.{table_name}"
         )
+
+        print(f"✅ Created table {db_name}.{table_name}")
     else:
         # Write to existing table
         # Use replaceWhere to insert to table; DO NOT parition again (will overwrite entire table!)
         df.write.format("delta").mode("overwrite").option(
             "replaceWhere", where_clause
         ).saveAsTable(f"{db_name}.{table_name}")
+
+        print(f"✅ Updated table {db_name}.{table_name}")
