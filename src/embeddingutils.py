@@ -70,6 +70,6 @@ def get_word_embeddings(words: list[str]) -> dict[str, list[float]]:
 
         # Compose into a single feature vector
         embedding_np = embedding.cpu().detach().numpy()
-        embeddings_dict[word] = embedding_np
+        embeddings_dict[word] = embedding_np.tolist()
 
     return embeddings_dict

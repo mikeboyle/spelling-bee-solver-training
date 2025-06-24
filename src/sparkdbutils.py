@@ -84,7 +84,7 @@ def write_to_table_replace_where(
     db_name: str,
     table_name: str,
     replace_where_dict: dict[str, Any],
-    partitions: list[str],
+    partitions: list[str] = [],
 ) -> None:
 
     filters = [f"{column} = {value}" for column, value in replace_where_dict.items()]

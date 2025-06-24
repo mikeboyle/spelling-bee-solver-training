@@ -1,5 +1,6 @@
 import json
 import os
+import csv
 from glob import glob
 from pathlib import Path
 from typing import Any, Optional
@@ -185,3 +186,13 @@ def get_latest_wordlist() -> tuple[str, int]:
     ]
 
     return max(wordlist_versions, key=lambda x: x[1])
+
+# TODO: Seek to end of file and back up
+def last_line_csv(file_path: str) -> list[str]:
+
+    with open(file_path, "r") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            pass
+
+        return row

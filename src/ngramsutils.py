@@ -70,7 +70,7 @@ def get_word_frequencies(words: list[str]) -> dict[str, float]:
 
     return frequencies_dict
 
-def get_word_frequencies_threaded(words: list[str], max_workers=5):
+def get_word_frequencies_threaded(words: list[str], max_workers=10):
     """Threaded version of get_word_frequencies"""
     start = time.time()
     print(f"get_word_frequencies_threaded(), words = {', '.join(words[:10])}...")
