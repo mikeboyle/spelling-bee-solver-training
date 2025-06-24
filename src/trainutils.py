@@ -1,4 +1,41 @@
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
+from pyspark.sql.types import ArrayType, FloatType
 import numpy as np
+
+def convert_df_to_features_v1(df: DataFrame) -> DataFrame:
+    """
+    Converts a spark dataframe from the silver.word_states
+    table to a dataframe with columns `words`, `features`, and `label`.
+    
+    The `features` column concatenates the word frequency and embedding into
+    a single vector, with the frequency as the first component.
+    
+    The `labels` column is the classification (`1.0` or `0.0`).
+    
+    The returned df is appropriate for training and inference for the v1 model.
+
+    Args:
+        df: a DataFrame of rows from silver.word_states where label is not null
+    
+    Returns:
+        final_df: DataFrame with columns `words`, `features`, `label`
+    """
+    # Define UDF to concatenate frequency with embedding
+    def concat_features(frequency, embedding):
+        return [float(frequency)] + embedding
+
+    concat_udf = F.udf(concat_features, ArrayType(FloatType()))
+
+    # Apply the transformation
+    training_df = df.withColumn(
+        "features", 
+        concat_udf(F.col("log_frequency"), F.col("embedding"))
+    )
+
+    # Select features and label
+    final_df = training_df.select("features", "label")
+    return final_df
 
 def evaluate_thresholds(log_freq, labels, low_range, high_range, min_bin_size=0.1):
     best_score = float('inf')
