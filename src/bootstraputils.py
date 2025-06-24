@@ -37,15 +37,15 @@ def collect_word_data_batched(
     Maintains a log of batches processed so that interrupted jobs can be resumed from the latest batch.
 
     Args:
-    - spark: SparkSession
-    - words_list: the list of words to be processed
-    - collect_fn: function that performs the processing on the words, returning a dictionary of [word]: [data]
-    - db_name: the name of the database to write to
-    - table_name: the name of the table to write to
-    - data_col: the column name of the data collected by collect_fn
-    - data_type: the data type of the data colelcted by collect_fn
-    - batch_size: the number of words per batch
-    - resum_job: if True, finds the last completed batch in the logfile and resumes from there.
+        spark: SparkSession
+        words_list: the list of words to be processed
+        collect_fn: function that performs the processing on the words, returning a dictionary of [word]: [data]
+        db_name: the name of the database to write to
+        table_name: the name of the table to write to
+        data_col: the column name of the data collected by collect_fn
+        data_type: the data type of the data colelcted by collect_fn
+        batch_size: the number of words per batch
+        resume_job: if True, finds the last completed batch in the logfile and resumes from there.
     """
     # Make logfile path
     log_file_name = f"{data_col}_batch_log.log"
