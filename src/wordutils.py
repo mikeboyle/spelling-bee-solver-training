@@ -29,6 +29,7 @@ def get_letter_set(word: str) -> str:
     distinct_letters = set(word)
     return "".join(sorted(distinct_letters)).upper()
 
+
 def filter_wordlist(words: set[str]) -> set[str]:
     """
     Remove words from list that cannot be Spelling Beee solutions.
@@ -47,6 +48,7 @@ def filter_wordlist(words: set[str]) -> set[str]:
         output.add(word)
 
     return output
+
 
 def get_letter_set_map(wordlist: set[str]) -> dict[str, list[Any]]:
     """Takes a wordlist and groups them by the distinct letter sets
@@ -87,9 +89,7 @@ def get_matching_words(
 
 def _transform_puzzle_to_word_decisions(
     puzzle: dict[str, Any],
-    wordlist: set[str],
     letter_set_map: dict[str, list[Any]],
-    wordlist_version: int,
 ) -> list[dict[str, Any]]:
     """
     For the given puzzle, wordlist, and letter_set_map:
@@ -116,12 +116,10 @@ def _transform_puzzle_to_word_decisions(
         rows.append(
             {
                 "word": word,
-                "accepted": word in official_solution,
-                "was_in_wordlist": word in wordlist,
-                "puzzle_date": datetime.strptime(puzzle_date, DATE_FORMAT),
                 "center_letter": center_letter,
                 "outer_letters": outer_letters,
-                "wordlist_version": wordlist_version,
+                "puzzle_date": datetime.strptime(puzzle_date, DATE_FORMAT),
+                "accepted": float(word in official_solution)
             }
         )
 
@@ -130,23 +128,17 @@ def _transform_puzzle_to_word_decisions(
 
 def transform_puzzle_to_word_decisions_by_path(
     puzzle_path: str,
-    wordlist: set[str],
     letter_set_map: dict[str, list[Any]],
-    wordlist_version: int,
 ) -> list[dict[str, Any]]:
 
     puzzle = get_puzzle_by_path(puzzle_path)
 
-    return _transform_puzzle_to_word_decisions(
-        puzzle, wordlist, letter_set_map, wordlist_version
-    )
+    return _transform_puzzle_to_word_decisions(puzzle, letter_set_map)
 
 
 def transform_puzzle_to_word_decisions_by_date(
     puzzle_date: str,
-    wordlist: set[str],
     letter_set_map: dict[str, list[Any]],
-    wordlist_version: int,
 ) -> list[dict[str, Any]]:
     """
     Read in puzzle for the given date, finds all possible words in wordlist that
@@ -155,6 +147,4 @@ def transform_puzzle_to_word_decisions_by_date(
     """
     puzzle = get_puzzle_by_date(puzzle_date)
 
-    return _transform_puzzle_to_word_decisions(
-        puzzle, wordlist, letter_set_map, wordlist_version
-    )
+    return _transform_puzzle_to_word_decisions(puzzle, letter_set_map)
