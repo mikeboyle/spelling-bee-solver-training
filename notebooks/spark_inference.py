@@ -3,9 +3,26 @@ from pyspark.sql.types import FloatType
 import pandas as pd
 import numpy as np
 
+"""
+TODO: use this function in context
+- Does silver.word_states have a probability column or a label column?
+- Should input df be filtered only to the words that need prediction? label = null or last_seen_on = null (should be the same thing)
+- Is this ever done incrementally or only as a boostrap/update? (I think the latter, check the plan)
+- In this case do we write as a single new gold table (check the plan)
+- First rename label column probability, then filter on probability = null to get df_model and filter on probability NOT null to get df_truth
+- Drop "probability" (or select only word, frequency, embedding) to get df_model2
+- Unpickle svd and clf, invoke df_model3 = inference(df_model2, svd, clf)
+- final_df = df_truth.union(df_model2)
+
+- If no table exists, create and write table for first time, partitioned by source?
+- If a table does exist, is this a merge into??
+
+"""
+
+
 def inference(df, svd_model, classifier):
     """
-    Apply inference to a Spark DataFrame with word embeddings.
+    Apply inference to a Spark DataFrame with word, frequency, and embedding columns.
     
     Args:
         df: Spark DataFrame with columns [word, frequency, embedding]
